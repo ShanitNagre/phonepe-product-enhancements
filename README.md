@@ -14,7 +14,7 @@
 | `01-product-teardown.md` | Research | Full teardown — strengths, gaps, opportunities |
 | `02-PRD-spend-intelligence.md` | PRD | Complete PRD for AI spending intelligence layer |
 | `03-competitive-analysis.md` | Analysis | PhonePe vs GPay, Paytm, CRED, Fi, Jupiter |
-| `04-spend-intelligence-prototype.html` | Prototype | Fully interactive mobile UI prototype |
+| `04-spend-intelligence-prototype.html` | Prototype | [Fully interactive mobile UI prototype →](https://shanitnagre.github.io/phonepe-product-analysis/04-spend-intelligence-prototype.html) |
 
 ---
 
@@ -43,7 +43,9 @@ Five components:
 
 ## Interactive Prototype
 
-Open `04-spend-intelligence-prototype.html` in any browser.
+🔗 [**Open Live Prototype →**](https://shanitnagre.github.io/phonepe-product-analysis/04-spend-intelligence-prototype.html)
+
+Works on desktop and mobile. No login, no install — opens directly in browser.
 
 Features working in the prototype:
 - 3 screens: Home, Insights, Upcoming Bills
