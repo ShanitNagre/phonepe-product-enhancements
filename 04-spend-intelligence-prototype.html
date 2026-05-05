@@ -1,0 +1,893 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>PhonePe Spend Intelligence — Prototype</title>
+<link href="https://fonts.googleapis.com/css2?family=Clash+Display:wght@400;500;600;700&family=Satoshi:wght@300;400;500;700&family=JetBrains+Mono:wght@300;400&display=swap" rel="stylesheet">
+<style>
+:root {
+  --pp-purple: #5f2eea;
+  --pp-purple-light: #7c4df7;
+  --pp-indigo: #1a0533;
+  --bg: #f7f4ff;
+  --white: #ffffff;
+  --text: #0d0414;
+  --muted: #9b8aad;
+  --border: rgba(95,46,234,0.1);
+  --green: #00c896;
+  --red: #ff4757;
+  --amber: #ffb020;
+  --card: #ffffff;
+  --shadow: 0 2px 24px rgba(95,46,234,0.08);
+}
+
+*,*::before,*::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { font-size: 16px; }
+body {
+  background: var(--bg);
+  font-family: 'Satoshi', sans-serif;
+  color: var(--text);
+  min-height: 100vh;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 40px 20px;
+}
+
+/* PHONE SHELL */
+.phone-shell {
+  width: 390px;
+  min-height: 844px;
+  background: var(--white);
+  border-radius: 52px;
+  box-shadow: 0 32px 80px rgba(95,46,234,0.2), 0 0 0 10px #1a0533, 0 0 0 12px #2d1052;
+  overflow: hidden;
+  position: relative;
+}
+
+/* STATUS BAR */
+.status-bar {
+  background: var(--pp-indigo);
+  padding: 14px 28px 8px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  color: white;
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+}
+.status-time { font-family: 'JetBrains Mono', monospace; font-size: 15px; font-weight: 400; }
+.status-icons { display: flex; gap: 6px; align-items: center; font-size: 12px; }
+
+/* APP HEADER */
+.app-header {
+  background: var(--pp-indigo);
+  padding: 8px 24px 28px;
+  position: relative;
+  overflow: hidden;
+}
+.app-header::after {
+  content: '';
+  position: absolute;
+  bottom: -40px; left: -20px; right: -20px;
+  height: 80px;
+  background: var(--pp-indigo);
+  border-radius: 50%;
+}
+.header-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+.pp-logo {
+  display: flex; align-items: center; gap: 8px;
+  color: white;
+  font-family: 'Clash Display', sans-serif;
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+.pp-logo-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--pp-purple-light); }
+.avatar {
+  width: 36px; height: 36px; border-radius: 50%;
+  background: linear-gradient(135deg, var(--pp-purple-light), #c084fc);
+  display: flex; align-items: center; justify-content: center;
+  color: white; font-weight: 700; font-size: 14px;
+  font-family: 'Clash Display', sans-serif;
+}
+.greeting {
+  color: rgba(255,255,255,0.6);
+  font-size: 13px; margin-bottom: 4px;
+}
+.balance-label {
+  color: white;
+  font-family: 'Clash Display', sans-serif;
+  font-size: 28px; font-weight: 600;
+  letter-spacing: -0.02em;
+}
+.balance-sub {
+  color: rgba(255,255,255,0.5);
+  font-size: 12px; margin-top: 2px;
+}
+
+/* NAV TABS */
+.nav-tabs {
+  display: flex;
+  background: var(--white);
+  border-bottom: 1px solid var(--border);
+  position: sticky; top: 0; z-index: 10;
+  margin-top: 20px;
+}
+.nav-tab {
+  flex: 1; padding: 14px 4px 12px;
+  text-align: center;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--muted);
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  transition: all 0.2s;
+}
+.nav-tab.active {
+  color: var(--pp-purple);
+  border-bottom-color: var(--pp-purple);
+  font-weight: 700;
+}
+
+/* SCREEN */
+.screen { display: none; padding: 20px; }
+.screen.active { display: block; }
+
+/* INSIGHT CARD */
+.insight-card {
+  background: linear-gradient(135deg, var(--pp-indigo) 0%, #2d1052 100%);
+  border-radius: 20px;
+  padding: 20px;
+  margin-bottom: 16px;
+  position: relative;
+  overflow: hidden;
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+.insight-card:hover { transform: scale(1.01); }
+.insight-card::before {
+  content: '';
+  position: absolute;
+  top: -30px; right: -30px;
+  width: 100px; height: 100px;
+  border-radius: 50%;
+  background: rgba(124,77,247,0.2);
+}
+.insight-badge {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: rgba(255,255,255,0.12);
+  border-radius: 20px;
+  padding: 4px 12px;
+  font-size: 11px;
+  color: rgba(255,255,255,0.8);
+  margin-bottom: 12px;
+  font-weight: 500;
+}
+.insight-text {
+  color: white;
+  font-family: 'Satoshi', sans-serif;
+  font-size: 15px;
+  line-height: 1.6;
+  font-weight: 400;
+}
+.insight-text strong { font-weight: 700; color: #c084fc; }
+.insight-action {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-top: 16px; padding-top: 16px;
+  border-top: 1px solid rgba(255,255,255,0.1);
+}
+.insight-cta {
+  font-size: 12px; color: var(--pp-purple-light);
+  font-weight: 600; letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.insight-arrow { color: var(--pp-purple-light); font-size: 16px; }
+
+/* SPEND PULSE CARD */
+.pulse-card {
+  background: var(--white);
+  border-radius: 20px;
+  padding: 20px;
+  margin-bottom: 16px;
+  box-shadow: var(--shadow);
+}
+.pulse-header {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 16px;
+}
+.pulse-title {
+  font-family: 'Clash Display', sans-serif;
+  font-size: 16px; font-weight: 600;
+  color: var(--text);
+}
+.pulse-week {
+  font-size: 11px; color: var(--muted);
+  background: var(--bg);
+  padding: 4px 10px; border-radius: 20px;
+}
+.category-row {
+  display: flex; align-items: center;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+  gap: 12px;
+}
+.category-row:last-child { border-bottom: none; }
+.cat-icon {
+  width: 36px; height: 36px; border-radius: 12px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px; flex-shrink: 0;
+}
+.cat-info { flex: 1; }
+.cat-name { font-size: 13px; font-weight: 600; color: var(--text); }
+.cat-count { font-size: 11px; color: var(--muted); margin-top: 1px; }
+.cat-right { text-align: right; }
+.cat-amount { font-family: 'JetBrains Mono', monospace; font-size: 14px; font-weight: 500; color: var(--text); }
+.cat-change {
+  font-size: 11px; font-weight: 600; margin-top: 2px;
+  display: flex; align-items: center; gap: 3px; justify-content: flex-end;
+}
+.cat-change.up { color: var(--red); }
+.cat-change.down { color: var(--green); }
+.cat-change.neutral { color: var(--muted); }
+
+/* BAR CHART */
+.bar-chart {
+  background: var(--white);
+  border-radius: 20px;
+  padding: 20px;
+  margin-bottom: 16px;
+  box-shadow: var(--shadow);
+}
+.bar-chart-title {
+  font-family: 'Clash Display', sans-serif;
+  font-size: 15px; font-weight: 600;
+  margin-bottom: 4px;
+}
+.bar-chart-sub { font-size: 11px; color: var(--muted); margin-bottom: 20px; }
+.bars {
+  display: flex; align-items: flex-end;
+  gap: 8px; height: 80px; margin-bottom: 8px;
+}
+.bar-wrap { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px; height: 100%; justify-content: flex-end; }
+.bar {
+  width: 100%; border-radius: 6px 6px 0 0;
+  background: var(--pp-purple);
+  opacity: 0.3;
+  transition: height 0.4s ease, opacity 0.2s;
+  min-height: 4px;
+}
+.bar.current { opacity: 1; background: var(--pp-purple); }
+.bar.highlight { opacity: 0.7; }
+.bar-label { font-size: 9px; color: var(--muted); letter-spacing: 0.04em; }
+
+/* PAYDAY CARD */
+.payday-card {
+  background: linear-gradient(135deg, #00c896 0%, #00a37a 100%);
+  border-radius: 20px;
+  padding: 20px;
+  margin-bottom: 16px;
+  color: white;
+}
+.payday-tag {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: rgba(255,255,255,0.2);
+  border-radius: 20px; padding: 4px 12px;
+  font-size: 11px; font-weight: 600;
+  text-transform: uppercase; letter-spacing: 0.06em;
+  margin-bottom: 12px;
+}
+.payday-amount {
+  font-family: 'Clash Display', sans-serif;
+  font-size: 32px; font-weight: 700;
+  letter-spacing: -0.02em;
+  margin-bottom: 4px;
+}
+.payday-desc { font-size: 13px; opacity: 0.8; margin-bottom: 16px; }
+.payday-breakdown {
+  background: rgba(255,255,255,0.15);
+  border-radius: 12px; padding: 12px;
+  display: flex; flex-direction: column; gap: 8px;
+}
+.breakdown-row {
+  display: flex; justify-content: space-between; align-items: center;
+  font-size: 12px;
+}
+.breakdown-label { opacity: 0.8; }
+.breakdown-amount { font-weight: 700; font-family: 'JetBrains Mono', monospace; font-size: 12px; }
+.breakdown-divider { border: none; border-top: 1px solid rgba(255,255,255,0.2); }
+.payday-sip-btn {
+  width: 100%; margin-top: 14px;
+  background: white; color: var(--green);
+  border: none; border-radius: 12px;
+  padding: 12px; font-weight: 700;
+  font-family: 'Satoshi', sans-serif;
+  font-size: 13px; cursor: pointer;
+  transition: transform 0.15s;
+}
+.payday-sip-btn:hover { transform: scale(1.02); }
+
+/* ALERT CARD */
+.alert-card {
+  background: var(--white);
+  border-radius: 16px;
+  padding: 16px;
+  margin-bottom: 10px;
+  box-shadow: var(--shadow);
+  display: flex; gap: 14px; align-items: flex-start;
+  cursor: pointer; transition: transform 0.15s;
+  border-left: 3px solid transparent;
+}
+.alert-card:hover { transform: translateX(3px); }
+.alert-card.warn { border-left-color: var(--amber); }
+.alert-card.info { border-left-color: var(--pp-purple); }
+.alert-card.good { border-left-color: var(--green); }
+.alert-icon {
+  width: 40px; height: 40px; border-radius: 12px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 20px; flex-shrink: 0;
+}
+.alert-icon.warn { background: rgba(255,176,32,0.1); }
+.alert-icon.info { background: rgba(95,46,234,0.08); }
+.alert-icon.good { background: rgba(0,200,150,0.1); }
+.alert-body { flex: 1; }
+.alert-title { font-size: 13px; font-weight: 700; color: var(--text); margin-bottom: 3px; }
+.alert-desc { font-size: 12px; color: var(--muted); line-height: 1.5; }
+.alert-time { font-size: 10px; color: var(--muted); margin-top: 4px; }
+
+/* SECTION LABEL */
+.section-label {
+  font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase;
+  color: var(--muted); font-weight: 600;
+  margin-bottom: 12px; margin-top: 4px;
+}
+
+/* UPCOMING BILLS */
+.bills-card {
+  background: var(--white);
+  border-radius: 20px;
+  padding: 20px;
+  margin-bottom: 16px;
+  box-shadow: var(--shadow);
+}
+.bill-row {
+  display: flex; align-items: center; gap: 12px;
+  padding: 10px 0; border-bottom: 1px solid var(--border);
+}
+.bill-row:last-child { border-bottom: none; }
+.bill-icon {
+  width: 36px; height: 36px; border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px; flex-shrink: 0;
+}
+.bill-info { flex: 1; }
+.bill-name { font-size: 13px; font-weight: 600; }
+.bill-due { font-size: 11px; color: var(--muted); }
+.bill-amount { font-family: 'JetBrains Mono', monospace; font-size: 14px; font-weight: 600; }
+.bill-status {
+  font-size: 10px; padding: 3px 8px; border-radius: 20px;
+  font-weight: 600; margin-left: 8px;
+}
+.bill-status.due-soon { background: rgba(255,176,32,0.12); color: var(--amber); }
+.bill-status.upcoming { background: rgba(95,46,234,0.08); color: var(--pp-purple); }
+
+/* QUICK ACTIONS */
+.quick-actions {
+  display: grid; grid-template-columns: repeat(4,1fr);
+  gap: 12px; margin-bottom: 20px;
+}
+.qa {
+  display: flex; flex-direction: column; align-items: center; gap: 8px;
+  cursor: pointer;
+}
+.qa-icon {
+  width: 52px; height: 52px; border-radius: 16px;
+  background: var(--white);
+  box-shadow: var(--shadow);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 22px;
+  transition: transform 0.15s;
+}
+.qa:hover .qa-icon { transform: scale(1.08); }
+.qa-label { font-size: 10px; color: var(--muted); font-weight: 600; text-align: center; letter-spacing: 0.02em; }
+
+/* NUDGE TOAST */
+.nudge-toast {
+  position: fixed;
+  bottom: 100px;
+  left: 50%;
+  transform: translateX(-50%) translateY(20px);
+  background: var(--pp-indigo);
+  color: white;
+  padding: 12px 20px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 500;
+  max-width: 320px;
+  text-align: center;
+  opacity: 0;
+  transition: all 0.3s;
+  z-index: 100;
+  pointer-events: none;
+}
+.nudge-toast.show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+/* BOTTOM NAV */
+.bottom-nav {
+  position: sticky; bottom: 0;
+  background: white;
+  border-top: 1px solid var(--border);
+  display: flex;
+  padding: 8px 0 20px;
+}
+.bnav-item {
+  flex: 1; display: flex; flex-direction: column; align-items: center;
+  gap: 4px; cursor: pointer; padding: 6px 0;
+  transition: color 0.2s;
+  color: var(--muted);
+}
+.bnav-item.active { color: var(--pp-purple); }
+.bnav-icon { font-size: 22px; }
+.bnav-label { font-size: 9px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; }
+
+/* PROTOTYPE LABEL */
+.prototype-banner {
+  text-align: center;
+  margin-bottom: 24px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: rgba(95,46,234,0.6);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+.prototype-banner span {
+  background: rgba(95,46,234,0.08);
+  padding: 6px 16px;
+  border-radius: 20px;
+  border: 1px solid rgba(95,46,234,0.15);
+}
+
+/* SIP MODAL */
+.modal-overlay {
+  display: none;
+  position: absolute; inset: 0;
+  background: rgba(26,5,51,0.7);
+  backdrop-filter: blur(4px);
+  z-index: 50;
+  align-items: flex-end;
+}
+.modal-overlay.open { display: flex; }
+.modal {
+  background: white;
+  border-radius: 28px 28px 0 0;
+  padding: 28px 24px 40px;
+  width: 100%;
+  animation: slideup 0.3s ease;
+}
+@keyframes slideup { from{transform:translateY(100%)} to{transform:translateY(0)} }
+.modal-handle {
+  width: 40px; height: 4px; border-radius: 2px;
+  background: var(--border);
+  margin: 0 auto 20px;
+}
+.modal-title {
+  font-family: 'Clash Display', sans-serif;
+  font-size: 22px; font-weight: 700; margin-bottom: 6px;
+}
+.modal-desc { font-size: 13px; color: var(--muted); margin-bottom: 24px; line-height: 1.6; }
+.sip-options { display: grid; grid-template-columns: repeat(3,1fr); gap: 10px; margin-bottom: 20px; }
+.sip-opt {
+  border: 2px solid var(--border); border-radius: 14px;
+  padding: 14px 8px; text-align: center; cursor: pointer;
+  transition: all 0.2s;
+}
+.sip-opt.selected { border-color: var(--pp-purple); background: rgba(95,46,234,0.05); }
+.sip-amt { font-family: 'Clash Display', sans-serif; font-size: 18px; font-weight: 700; color: var(--pp-purple); }
+.sip-lbl { font-size: 10px; color: var(--muted); margin-top: 2px; text-transform: uppercase; letter-spacing: 0.04em; }
+.modal-btn {
+  width: 100%; padding: 16px;
+  background: var(--pp-purple); color: white;
+  border: none; border-radius: 14px;
+  font-family: 'Satoshi', sans-serif; font-size: 15px; font-weight: 700;
+  cursor: pointer; transition: background 0.2s;
+}
+.modal-btn:hover { background: var(--pp-purple-light); }
+.modal-close {
+  position: absolute; top: 20px; right: 20px;
+  background: var(--bg); border: none; border-radius: 50%;
+  width: 32px; height: 32px; cursor: pointer;
+  font-size: 16px; color: var(--muted);
+  display: flex; align-items: center; justify-content: center;
+}
+</style>
+</head>
+<body>
+
+<div style="max-width:500px;margin:0 auto">
+  <div class="prototype-banner">
+    <span>📱 Interactive Prototype · PhonePe Spend Intelligence · Shanit Nagre</span>
+  </div>
+
+  <div class="phone-shell">
+    <!-- STATUS BAR -->
+    <div class="status-bar">
+      <span class="status-time">9:41</span>
+      <div class="status-icons">
+        <span>●●●</span><span>WiFi</span><span>🔋</span>
+      </div>
+    </div>
+
+    <!-- APP HEADER -->
+    <div class="app-header">
+      <div class="header-top">
+        <div class="pp-logo">
+          <div class="pp-logo-dot"></div>
+          PhonePe
+        </div>
+        <div class="avatar">SN</div>
+      </div>
+      <div class="greeting">Good morning, Shanit 👋</div>
+      <div class="balance-label">₹22,340 available</div>
+      <div class="balance-sub">After your EMIs hit on the 5th</div>
+    </div>
+
+    <!-- NAV TABS -->
+    <div class="nav-tabs">
+      <div class="nav-tab active" onclick="switchTab('home')">Home</div>
+      <div class="nav-tab" onclick="switchTab('insights')">Insights ✨</div>
+      <div class="nav-tab" onclick="switchTab('upcoming')">Upcoming</div>
+    </div>
+
+    <!-- HOME SCREEN -->
+    <div class="screen active" id="screen-home">
+      <!-- QUICK ACTIONS -->
+      <div style="padding:20px 20px 0">
+        <div class="quick-actions">
+          <div class="qa"><div class="qa-icon">💸</div><div class="qa-label">Send</div></div>
+          <div class="qa"><div class="qa-icon">📲</div><div class="qa-label">Request</div></div>
+          <div class="qa"><div class="qa-icon">🧾</div><div class="qa-label">Pay Bills</div></div>
+          <div class="qa"><div class="qa-icon">📈</div><div class="qa-label">Invest</div></div>
+        </div>
+      </div>
+
+      <div style="padding:0 20px 20px">
+        <!-- AI NUDGE -->
+        <div class="insight-card" onclick="showToast('Opening Spend Intelligence...')">
+          <div class="insight-badge">✨ AI Insight</div>
+          <div class="insight-text">
+            You've spent <strong>₹4,840 on Swiggy</strong> this month — that's your highest month this year. You're on track to exceed your usual food budget by <strong>₹1,200</strong>.
+          </div>
+          <div class="insight-action">
+            <span class="insight-cta">View breakdown</span>
+            <span class="insight-arrow">→</span>
+          </div>
+        </div>
+
+        <!-- PAYDAY CARD -->
+        <div class="payday-card">
+          <div class="payday-tag">💰 Salary Credited</div>
+          <div class="payday-amount">₹72,000</div>
+          <div class="payday-desc">HDFC Bank · Today, 9:02 AM</div>
+          <div class="payday-breakdown">
+            <div class="breakdown-row">
+              <span class="breakdown-label">Rent (1st)</span>
+              <span class="breakdown-amount">−₹18,000</span>
+            </div>
+            <div class="breakdown-row">
+              <span class="breakdown-label">EMI — Axis Bank (5th)</span>
+              <span class="breakdown-amount">−₹12,400</span>
+            </div>
+            <div class="breakdown-row">
+              <span class="breakdown-label">Avg monthly spend</span>
+              <span class="breakdown-amount">−₹19,260</span>
+            </div>
+            <hr class="breakdown-divider">
+            <div class="breakdown-row">
+              <span class="breakdown-label" style="font-weight:700;color:white">Est. available</span>
+              <span class="breakdown-amount" style="color:white">~₹22,340</span>
+            </div>
+          </div>
+          <button class="payday-sip-btn" onclick="openSIPModal()">
+            Set aside savings before you spend →
+          </button>
+        </div>
+
+        <!-- ALERTS -->
+        <div class="section-label">Recent Alerts</div>
+        <div class="alert-card warn" onclick="showToast('Viewing food delivery breakdown...')">
+          <div class="alert-icon warn">🛵</div>
+          <div class="alert-body">
+            <div class="alert-title">Food delivery up 89% this week</div>
+            <div class="alert-desc">₹2,100 on Swiggy & Zomato in 7 days vs your ₹1,110 weekly average</div>
+            <div class="alert-time">2 hours ago</div>
+          </div>
+        </div>
+        <div class="alert-card info" onclick="showToast('Viewing broadband bill...')">
+          <div class="alert-icon info">📡</div>
+          <div class="alert-body">
+            <div class="alert-title">Broadband bill usually due this week</div>
+            <div class="alert-desc">Jio Fiber · ₹999 · typically paid around the 8th</div>
+            <div class="alert-time">Today</div>
+          </div>
+        </div>
+        <div class="alert-card good" onclick="showToast('Great! Viewing savings streak...')">
+          <div class="alert-icon good">🎯</div>
+          <div class="alert-body">
+            <div class="alert-title">3 months of consistent savings</div>
+            <div class="alert-desc">You've saved ₹5,000+ every month since February. That's a streak worth keeping.</div>
+            <div class="alert-time">Yesterday</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- INSIGHTS SCREEN -->
+    <div class="screen" id="screen-insights">
+      <div style="padding:20px">
+        <!-- SPEND PULSE -->
+        <div class="section-label">This Month · May 2026</div>
+        <div class="pulse-card">
+          <div class="pulse-header">
+            <div class="pulse-title">Spend Pulse</div>
+            <div class="pulse-week">May 1–5</div>
+          </div>
+          <div class="category-row">
+            <div class="cat-icon" style="background:#fff3f3">🛵</div>
+            <div class="cat-info">
+              <div class="cat-name">Food Delivery</div>
+              <div class="cat-count">14 transactions</div>
+            </div>
+            <div class="cat-right">
+              <div class="cat-amount">₹4,840</div>
+              <div class="cat-change up">↑ 89% vs avg</div>
+            </div>
+          </div>
+          <div class="category-row">
+            <div class="cat-icon" style="background:#f0f4ff">🚕</div>
+            <div class="cat-info">
+              <div class="cat-name">Transport</div>
+              <div class="cat-count">8 transactions</div>
+            </div>
+            <div class="cat-right">
+              <div class="cat-amount">₹1,240</div>
+              <div class="cat-change down">↓ 12% vs avg</div>
+            </div>
+          </div>
+          <div class="category-row">
+            <div class="cat-icon" style="background:#f0fff8">🛒</div>
+            <div class="cat-info">
+              <div class="cat-name">Groceries</div>
+              <div class="cat-count">3 transactions</div>
+            </div>
+            <div class="cat-right">
+              <div class="cat-amount">₹2,180</div>
+              <div class="cat-change neutral">→ on track</div>
+            </div>
+          </div>
+          <div class="category-row">
+            <div class="cat-icon" style="background:#fdf4ff">🎬</div>
+            <div class="cat-info">
+              <div class="cat-name">Entertainment</div>
+              <div class="cat-count">5 transactions</div>
+            </div>
+            <div class="cat-right">
+              <div class="cat-amount">₹890</div>
+              <div class="cat-change down">↓ 30% vs avg</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- BAR CHART -->
+        <div class="bar-chart">
+          <div class="bar-chart-title">Monthly Spend Trend</div>
+          <div class="bar-chart-sub">Last 6 months vs this month</div>
+          <div class="bars">
+            <div class="bar-wrap"><div class="bar" style="height:55%"></div><div class="bar-label">Dec</div></div>
+            <div class="bar-wrap"><div class="bar" style="height:48%"></div><div class="bar-label">Jan</div></div>
+            <div class="bar-wrap"><div class="bar highlight" style="height:62%"></div><div class="bar-label">Feb</div></div>
+            <div class="bar-wrap"><div class="bar" style="height:51%"></div><div class="bar-label">Mar</div></div>
+            <div class="bar-wrap"><div class="bar" style="height:58%"></div><div class="bar-label">Apr</div></div>
+            <div class="bar-wrap"><div class="bar current" style="height:38%"></div><div class="bar-label">May</div></div>
+          </div>
+          <div style="font-size:11px;color:var(--muted);text-align:center">May in progress · ₹9,150 so far vs ₹28,400 avg</div>
+        </div>
+
+        <!-- INTERESTING OBSERVATION -->
+        <div class="insight-card" style="background:linear-gradient(135deg,#1a0533,#3b1278)">
+          <div class="insight-badge">🔍 Pattern Detected</div>
+          <div class="insight-text">
+            You spend <strong>3× more on food delivery on Thursdays</strong> than any other day. ₹890 average on Thursdays vs ₹290 on other days.
+          </div>
+          <div class="insight-action">
+            <span class="insight-cta">That's... oddly specific</span>
+            <span class="insight-arrow">🤷</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- UPCOMING SCREEN -->
+    <div class="screen" id="screen-upcoming">
+      <div style="padding:20px">
+        <div class="section-label">Next 30 days · Committed expenses</div>
+
+        <div class="bills-card">
+          <div class="bill-row">
+            <div class="bill-icon" style="background:#fff0f0">🏠</div>
+            <div class="bill-info">
+              <div class="bill-name">Rent — Koregaon Park</div>
+              <div class="bill-due">Due 1st June · Every month</div>
+            </div>
+            <div>
+              <div class="bill-amount">₹18,000</div>
+              <span class="bill-status due-soon">In 26 days</span>
+            </div>
+          </div>
+          <div class="bill-row">
+            <div class="bill-icon" style="background:#f0f4ff">🏦</div>
+            <div class="bill-info">
+              <div class="bill-name">EMI — Axis Bank Personal Loan</div>
+              <div class="bill-due">Due 5th every month · Auto-debit</div>
+            </div>
+            <div>
+              <div class="bill-amount">₹12,400</div>
+              <span class="bill-status upcoming">Auto</span>
+            </div>
+          </div>
+          <div class="bill-row">
+            <div class="bill-icon" style="background:#f0fff8">📡</div>
+            <div class="bill-info">
+              <div class="bill-name">Jio Fiber Broadband</div>
+              <div class="bill-due">Usually paid around 8th</div>
+            </div>
+            <div>
+              <div class="bill-amount">₹999</div>
+              <span class="bill-status due-soon">Pay soon</span>
+            </div>
+          </div>
+          <div class="bill-row">
+            <div class="bill-icon" style="background:#fffbf0">⚡</div>
+            <div class="bill-info">
+              <div class="bill-name">Electricity — MSEDCL</div>
+              <div class="bill-due">Est. based on last 6 months</div>
+            </div>
+            <div>
+              <div class="bill-amount">~₹1,840</div>
+              <span class="bill-status upcoming">Est.</span>
+            </div>
+          </div>
+          <div class="bill-row">
+            <div class="bill-icon" style="background:#fdf4ff">📱</div>
+            <div class="bill-info">
+              <div class="bill-name">Airtel Postpaid</div>
+              <div class="bill-due">Bill generated · Due 18th</div>
+            </div>
+            <div>
+              <div class="bill-amount">₹699</div>
+              <span class="bill-status due-soon">Due soon</span>
+            </div>
+          </div>
+        </div>
+
+        <div style="background:var(--white);border-radius:16px;padding:16px;box-shadow:var(--shadow)">
+          <div style="font-size:13px;color:var(--muted);margin-bottom:8px">After all committed expenses</div>
+          <div style="font-family:'Clash Display',sans-serif;font-size:28px;font-weight:700;color:var(--pp-purple)">~₹22,340</div>
+          <div style="font-size:12px;color:var(--muted);margin-top:4px">Available for discretionary spending this month</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- BOTTOM NAV -->
+    <div class="bottom-nav">
+      <div class="bnav-item active" onclick="switchTab('home')">
+        <div class="bnav-icon">🏠</div>
+        <div class="bnav-label">Home</div>
+      </div>
+      <div class="bnav-item" onclick="switchTab('insights')">
+        <div class="bnav-icon">✨</div>
+        <div class="bnav-label">Insights</div>
+      </div>
+      <div class="bnav-item" onclick="switchTab('upcoming')">
+        <div class="bnav-icon">📅</div>
+        <div class="bnav-label">Upcoming</div>
+      </div>
+      <div class="bnav-item" onclick="showToast('History view coming soon!')">
+        <div class="bnav-icon">📋</div>
+        <div class="bnav-label">History</div>
+      </div>
+      <div class="bnav-item" onclick="showToast('Profile settings')">
+        <div class="bnav-icon">👤</div>
+        <div class="bnav-label">Profile</div>
+      </div>
+    </div>
+
+    <!-- TOAST -->
+    <div class="nudge-toast" id="toast"></div>
+
+    <!-- SIP MODAL -->
+    <div class="modal-overlay" id="sipModal">
+      <div class="modal" style="position:relative">
+        <button class="modal-close" onclick="closeSIPModal()">✕</button>
+        <div class="modal-handle"></div>
+        <div class="modal-title">Start a SIP 🌱</div>
+        <div class="modal-desc">Set aside money before you spend it. Even ₹1,000/month compounds to ₹1.6L in 10 years at 12% returns.</div>
+        <div class="sip-options">
+          <div class="sip-opt selected" onclick="selectSIP(this)">
+            <div class="sip-amt">₹1K</div>
+            <div class="sip-lbl">Starter</div>
+          </div>
+          <div class="sip-opt" onclick="selectSIP(this)">
+            <div class="sip-amt">₹3K</div>
+            <div class="sip-lbl">Popular</div>
+          </div>
+          <div class="sip-opt" onclick="selectSIP(this)">
+            <div class="sip-amt">₹5K</div>
+            <div class="sip-lbl">Recommended</div>
+          </div>
+        </div>
+        <button class="modal-btn" onclick="confirmSIP()">Start SIP — 1st of every month</button>
+      </div>
+    </div>
+  </div>
+
+  <div style="text-align:center;margin-top:24px;font-size:11px;color:rgba(95,46,234,0.5);font-family:'JetBrains Mono',monospace;letter-spacing:0.08em">
+    CONCEPT PROTOTYPE · NOT AN OFFICIAL PHONEPE PRODUCT<br>
+    Shanit Nagre · AI Product Manager · shanitnagre.github.io
+  </div>
+</div>
+
+<script>
+function switchTab(tab) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.bnav-item').forEach(t => t.classList.remove('active'));
+  document.getElementById('screen-' + tab).classList.add('active');
+  const tabs = ['home','insights','upcoming'];
+  const navTabs = document.querySelectorAll('.nav-tab');
+  const idx = tabs.indexOf(tab);
+  if(idx >= 0) navTabs[idx].classList.add('active');
+  const bnavItems = document.querySelectorAll('.bnav-item');
+  if(idx >= 0) bnavItems[idx].classList.add('active');
+}
+
+let toastTimer;
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+function openSIPModal() {
+  document.getElementById('sipModal').classList.add('open');
+}
+
+function closeSIPModal() {
+  document.getElementById('sipModal').classList.remove('open');
+}
+
+function selectSIP(el) {
+  document.querySelectorAll('.sip-opt').forEach(o => o.classList.remove('selected'));
+  el.classList.add('selected');
+}
+
+function confirmSIP() {
+  closeSIPModal();
+  showToast('🎉 SIP started! First investment on 1st June.');
+}
+</script>
+</body>
+</html>
